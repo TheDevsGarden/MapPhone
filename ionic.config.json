@@ -1,0 +1,7 @@
+{
+  "name": "MapPhone",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
