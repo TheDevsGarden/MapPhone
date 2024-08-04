@@ -72,7 +72,6 @@ const viewentityDetails = (entityId: string) => {
 };
 
 //the map
-
 let map: google.maps.Map;
 let center: google.maps.LatLngLiteral;
 
@@ -93,7 +92,8 @@ async function initMap() {
   map = new Map(document.getElementById("map") as HTMLElement, {
     center: center,
     zoom: 11,
-    mapId: "DEMO_MAP_ID",
+    mapId: "HomeMap",
+    disableDefaultUI: true,
   });
   findPlaces();
 }
@@ -101,6 +101,7 @@ async function initMap() {
 async function findPlaces(request: google.maps.places.TextSearchRequest) {
   const { Place } = (await google.maps.importLibrary("places")) as google.maps.PlacesLibrary;
   const { AdvancedMarkerElement } = (await google.maps.importLibrary("marker")) as google.maps.MarkerLibrary;
+  const { InfoWindow } = (await google.maps.importLibrary("maps")) as google.maps.MapsLibrary;
 
   try {
     const { places } = await Place.searchByText(request);
@@ -108,16 +109,47 @@ async function findPlaces(request: google.maps.places.TextSearchRequest) {
     if (places.length) {
       const { LatLngBounds } = (await google.maps.importLibrary("core")) as google.maps.CoreLibrary;
       const bounds = new LatLngBounds();
-      console.log("latlongbnds");
-
-      // Clear existing markers (if any)
-      //map.clear();
 
       places.forEach((place) => {
         const markerView = new AdvancedMarkerElement({
           map,
           position: place.location,
           title: place.displayName,
+        });
+        const infoWindow = new InfoWindow({
+          content: `
+            <div style="font-size: 0.5rem; margin: 0; padding: 4px; white-space: nowrap;">
+              <button id="createModify-${place.id}" style="margin-top:5px; background-color: blue; color: white; font-weight: bold; border: none; padding: 4px 8px; cursor: pointer; font-size: 0.75rem;">Create or Modify</button>
+              <h3 style="margin: 0 0 2px 0;">${place.displayName}</h3>
+              <p style="margin: 0 0 2px 0; font-size: 1rem;">${place.internationalPhoneNumber || "No phone number available"}</p>
+
+            </div>
+          `,
+        });
+
+        markerView.addListener("click", () => {
+          infoWindow.open({
+            anchor: markerView,
+            map,
+          });
+
+          // Add event listener to the button after the InfoWindow is opened
+          setTimeout(() => {
+            const createModifyButton = document.getElementById(`createModify-${place.id}`);
+            if (createModifyButton) {
+              createModifyButton.addEventListener("click", () => {
+                router.push({
+                  name: "FolderPage",
+                  params: { id: place.id },
+                  query: {
+                    name: place?.displayName || "",
+                    phoneNumber: place.internationalPhoneNumber || "",
+                    address: place.formattedAddress || "",
+                  },
+                });
+              });
+            }
+          }, 150);
         });
 
         if (place.location) {
@@ -137,6 +169,11 @@ async function findPlaces(request: google.maps.places.TextSearchRequest) {
     console.error("Error searching for places:", error);
   }
 }
+
+//now I want to give the user an option to select a place from the map
+// check the selected place in the db = exists? create entity ? modify entity
+
+//now I want the create or modify page to route to EntityDetails and pass to it the google maps id, name, international phone number
 
 onMounted(() => {
   initMap();

@@ -12,8 +12,12 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/folder/:id",
-    name: "Folder",
+    name: "FolderPage",
     component: () => import("../views/FolderPage.vue"),
+    props: (route) => ({
+      id: route.params.id,
+      ...route.query,
+    }),
   },
 ];
 
