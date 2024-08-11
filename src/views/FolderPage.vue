@@ -26,29 +26,24 @@
 
       <div id="supabase">
         <p>Data from Supabase:</p>
-        <!-- <ul v-if="placeData.length">
-          <li v-for="place in placeData" :key="place.place_name">
-            <strong>{{ place.place_name }}</strong>
-            <p>Types: {{ place.place_types }}</p>
-          </li>
-        </ul>
-        <div v-else>
-          <p>No data available, would you like to create it?</p>
-          <ion-button>Add</ion-button>
-        </div>
-
-        //display drop down list for place in places -->
-
-        <ion-list>
-          <template v-for="item in flattenedTree" :key="item.id">
+        <!-- <template v-for="(item, index) in flattenedTree" :key="item.id">
             <ion-item @click="toggleItem(item)" :style="{ paddingLeft: `${item.level * 20}px` }" button>
               <ion-label>
                 <ion-icon :icon="item.expanded ? 'chevron-up-outline' : 'chevron-down-outline'" slot="start" v-if="item.hasChildren"></ion-icon>
               </ion-label>
-              <h2>{{ item.name }}</h2>
+              <h2>{{ index === 0 ? item.name : `menu option ${item.menuNumber}` }}</h2>
             </ion-item>
-          </template>
-        </ion-list>
+          </template> -->
+
+        <!--         <div v-for="item in placeData" :key="item.id">
+          <ion-list>
+            <ion-item> {{ item.menuNumber }} | {{ item.name }} </ion-item>
+          </ion-list>
+        </div> -->
+
+        <ul>
+          <TreeItem class="item" :model="treeData"></TreeItem>
+        </ul>
       </div>
     </ion-content>
   </ion-page>
@@ -61,6 +56,9 @@ import { ref, onMounted, computed } from "vue";
 import { supabase } from "../shared/services/supabase";
 import { chevronUp, chevronDown, chevronUpOutline, chevronDownOutline } from "ionicons/icons";
 import { addIcons } from "ionicons";
+
+//tree items from guide
+import TreeItem from "../modules/ExtensionTree/components/TreeItem.vue";
 
 addIcons({
   "chevron-up": chevronUp,
@@ -78,35 +76,21 @@ const props = defineProps<{
   address?: string;
 }>();
 
-//const placeData = ref<{ place_name: string; place_types: string }[]>([]);
-
-/* onMounted(async () => {
-  try {
-    const { data, error } = await supabase.from("map_phone_region_all_rows2").select("place_name, place_types").eq("places_root_id", "ChIJj61dQgK6j4AR4GeTYWZsKWw"); //props.id
-
-    console.log(data);
-
-    if (error) throw error;
-    placeData.value = data || [];
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  }
-}); */
-
-interface TreeItem {
+interface TreeItem1 {
   id: string;
   name: string;
   parentId: string | null;
   level: number;
   expanded: boolean;
   hasChildren: boolean;
+  menuNumber: number;
 }
 
-const placeData = ref<TreeItem[]>([]);
+const placeData = ref<TreeItem1[]>([]);
 
 onMounted(async () => {
   try {
-    const { data, error } = await supabase.from("map_phone_region_all_rows2").select("item_id, item_name, parent_id, level, expanded, haschildren").eq("places_root_id", "ChIJj61dQgK6j4AR4GeTYWZsKWw").order("item_id"); //props.id
+    const { data, error } = await supabase.from("map_phone_region_all_rows2").select("item_id, item_name, menu_number, parent_id, level, expanded, haschildren").eq("places_root_id", "ChIJj61dQgK6j4AR4GeTYWZsKWw").order("item_id"); //props.id
 
     console.log(data);
 
@@ -117,30 +101,45 @@ onMounted(async () => {
       name: item.item_name || "",
       parentId: item.parent_id ? item.parent_id.toString() : null,
       level: item.level,
-      expanded: item.expanded || false,
-      hasChildren: item.haschildren || false,
+      expanded: Boolean(item.expanded),
+      hasChildren: Boolean(item.haschildren),
+      menuNumber: item.menu_number,
     }));
+
+    console.log(placeData.value);
   } catch (error) {
     console.error("Error fetching data:", error);
   }
 });
 
-const flattenedTree = computed(() => {
-  return placeData.value.filter((item) => item.parentId === null || placeData.value.find((parent) => parent.id === item.parentId)?.expanded);
-});
-
-const toggleItem = async (item: TreeItem) => {
-  if (item.hasChildren) {
-    item.expanded = !item.expanded;
-    try {
-      const { error } = await supabase.from("map_phone_region_all_rows2").update({ expanded: item.expanded }).eq("item_id", parseInt(item.id)).eq("places_root_id", "ChIJj61dQgK6j4AR4GeTYWZsKWw"); //props.id
-
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error updating item:", error);
-    }
-  }
+const toggleItem = (item: TreeItem1) => {
+  item.expanded = !item.expanded;
 };
+
+//tree item tests
+
+const treeData = ref({
+  name: "514-555-5555",
+  children: [
+    { name: "hello" },
+    { name: "world" },
+    {
+      name: "child folder",
+      children: [
+        {
+          name: "child folder",
+          children: [{ name: "hello" }, { name: "world" }],
+        },
+        { name: "hello" },
+        { name: "world" },
+        {
+          name: "child folder",
+          children: [{ name: "hello" }, { name: "world" }],
+        },
+      ],
+    },
+  ],
+});
 </script>
 
 <style scoped></style>
