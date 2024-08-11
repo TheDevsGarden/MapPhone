@@ -1,0 +1,8 @@
+places_root_id,item_id,item_name,parent_id,level,expanded,haschildren,place_name,place_types,formatttedAddress,place_website,country,state_province,city,latitude,longitude
+ChIJj61dQgK6j4AR4GeTYWZsKWw,1,"+1 (555) 123-4567",,0,true,true,"Acme Corporation","['business', 'corporate_office']","1234 Business Ave, Metropolis, CA 90210","https://www.acmecorp.com","USA","California","Metropolis",34.0522,-118.2437
+ChIJj61dQgK6j4AR4GeTYWZsKWw,2,"Sales Department",1,1,true,true,,,,,,,,
+ChIJj61dQgK6j4AR4GeTYWZsKWw,3,"North Region",2,2,false,false,,,,,,,,
+ChIJj61dQgK6j4AR4GeTYWZsKWw,4,"South Region",2,2,false,false,,,,,,,,
+ChIJj61dQgK6j4AR4GeTYWZsKWw,5,"Customer Service",1,1,true,true,,,,,,,,
+ChIJj61dQgK6j4AR4GeTYWZsKWw,6,"Technical Support",5,2,false,false,,,,,,,,
+ChIJj61dQgK6j4AR4GeTYWZsKWw,7,"Human Resources",1,1,false,false,,,,,,,,
