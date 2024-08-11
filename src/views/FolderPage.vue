@@ -127,6 +127,9 @@ onMounted(async () => {
     console.error("Error fetching data:", error);
   }
 });
+
+//before mounting or on ion view will enter, check if the props.id exists in supabase
+// if it doesn't, call the places api and fill in a row except for the menu_strucutre, leave that null
 </script>
 
 <style scoped></style>
