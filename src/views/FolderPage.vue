@@ -24,26 +24,16 @@
         <p>Google Maps ID: {{ id }}</p>
       </div>
 
-      <div id="supabase">
-        <p>Data from Supabase:</p>
-        <!-- <template v-for="(item, index) in flattenedTree" :key="item.id">
-            <ion-item @click="toggleItem(item)" :style="{ paddingLeft: `${item.level * 20}px` }" button>
-              <ion-label>
-                <ion-icon :icon="item.expanded ? 'chevron-up-outline' : 'chevron-down-outline'" slot="start" v-if="item.hasChildren"></ion-icon>
-              </ion-label>
-              <h2>{{ index === 0 ? item.name : `menu option ${item.menuNumber}` }}</h2>
-            </ion-item>
-          </template> -->
+      <div id="placeInfo" v-if="placeData">
+        <h2>{{ placeData.name }}</h2>
+        <p>Phone: {{ placeData.phoneNumber }}</p>
+        <p>Address: {{ placeData.address }}</p>
+        <p>Website: {{ placeData.website }}</p>
+      </div>
 
-        <!--         <div v-for="item in placeData" :key="item.id">
-          <ion-list>
-            <ion-item> {{ item.menuNumber }} | {{ item.name }} </ion-item>
-          </ion-list>
-        </div> -->
-
-        <ul>
-          <TreeItem class="item" :model="treeData"></TreeItem>
-        </ul>
+      <div id="menuStructure" v-if="placeData">
+        <h3>Menu Structure</h3>
+        <TreeItem :model="placeData.menuStructure"></TreeItem>
       </div>
     </ion-content>
   </ion-page>
@@ -60,13 +50,6 @@ import { addIcons } from "ionicons";
 //tree items from guide
 import TreeItem from "../modules/ExtensionTree/components/TreeItem.vue";
 
-addIcons({
-  "chevron-up": chevronUp,
-  "chevron-down": chevronDown,
-  "chevron-up-outline": chevronUpOutline,
-  "chevron-down-outline": chevronDownOutline,
-});
-
 const route = useRoute();
 
 const props = defineProps<{
@@ -76,69 +59,73 @@ const props = defineProps<{
   address?: string;
 }>();
 
-interface TreeItem1 {
-  id: string;
+//tree item tests
+interface MenuItem {
   name: string;
-  parentId: string | null;
-  level: number;
-  expanded: boolean;
-  hasChildren: boolean;
-  menuNumber: number;
+  menuNumber?: number;
+  children?: MenuItem[];
 }
 
-const placeData = ref<TreeItem1[]>([]);
+interface PlaceData {
+  id: number;
+  placesId: string;
+  name: string;
+  displayName: string;
+  types: string[];
+  nationalPhoneNumber: string;
+  internationalPhoneNumber: string;
+  formattedAddress: string;
+  addressComponents: any;
+  country: string;
+  stateProvince: string;
+  city: string;
+  plusCode: any;
+  location: any;
+  rating: number;
+  googleMapsUri: string;
+  websiteUri: string;
+  regularOpeningHours: any;
+  currentOpeningHours: any;
+  businessStatus: string;
+  userRatingCount: number;
+  iconMaskBaseUri: string;
+  iconBackgroundColor: string;
+  editorialSummary: string;
+  accessibilityOptions: any;
+  menuStructure: MenuItem;
+}
+
+const placeData = ref<PlaceData | null>(null);
 
 onMounted(async () => {
   try {
-    const { data, error } = await supabase.from("map_phone_region_all_rows2").select("item_id, item_name, menu_number, parent_id, level, expanded, haschildren").eq("places_root_id", "ChIJj61dQgK6j4AR4GeTYWZsKWw").order("item_id"); //props.id
-
-    console.log(data);
+    const { data, error } = await supabase.from("places").select("id, places_id, name, types, phone_number, address, website, latitude, longitude, menu_structure").eq("places_id", "ChIJN1t_tDeuEmsRUsoyG83frY4").single(); //props.id
 
     if (error) throw error;
 
-    placeData.value = data.map((item) => ({
-      id: item.item_id.toString(),
-      name: item.item_name || "",
-      parentId: item.parent_id ? item.parent_id.toString() : null,
-      level: item.level,
-      expanded: Boolean(item.expanded),
-      hasChildren: Boolean(item.haschildren),
-      menuNumber: item.menu_number,
-    }));
+    if (data) {
+      placeData.value = {
+        id: data.id,
+        placesId: data.places_id,
+        name: data.name,
+        types: data.types,
+        phoneNumber: data.phone_number,
+        address: data.address,
+        website: data.website,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        menuStructure: data.menu_structure,
+      };
 
-    console.log(placeData.value);
+      treeData.value = data.menu_structure;
+      console.log(treeData.value);
+    }
+
+    console.log("Place data:", placeData.value);
+    console.log("Tree data:", treeData.value);
   } catch (error) {
     console.error("Error fetching data:", error);
   }
-});
-
-const toggleItem = (item: TreeItem1) => {
-  item.expanded = !item.expanded;
-};
-
-//tree item tests
-
-const treeData = ref({
-  name: "514-555-5555",
-  children: [
-    { name: "hello" },
-    { name: "world" },
-    {
-      name: "child folder",
-      children: [
-        {
-          name: "child folder",
-          children: [{ name: "hello" }, { name: "world" }],
-        },
-        { name: "hello" },
-        { name: "world" },
-        {
-          name: "child folder",
-          children: [{ name: "hello" }, { name: "world" }],
-        },
-      ],
-    },
-  ],
 });
 </script>
 
