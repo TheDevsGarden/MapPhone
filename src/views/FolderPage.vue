@@ -24,16 +24,36 @@
         <p>Google Maps ID: {{ id }}</p>
       </div>
 
-      <div id="placeInfo" v-if="placeData">
-        <h2>{{ placeData.name }}</h2>
-        <p>Phone: {{ placeData.phoneNumber }}</p>
-        <p>Address: {{ placeData.address }}</p>
-        <p>Website: {{ placeData.website }}</p>
+      <div id="toggleShowTree" v-if="editMenuStructureBool === false">
+        <div id="placeInfo" v-if="placeData">
+          <!-- <h2>{{ placeData.name }}</h2> -->
+          <h2>{{ placeData.name }}</h2>
+          <p>Phone: {{ placeData.phoneNumber }}</p>
+          <p>Address: {{ placeData.address }}</p>
+          <p>Website: {{ placeData.website }}</p>
+        </div>
+        <div id="menuStructure" v-if="placeData">
+          <h5>To navigate this phone line, use the following menu:</h5>
+          <ion-button @click="toggleEditMenuStructureBool">Edit this menu</ion-button>
+          <TreeItem :model="placeData.menuStructure"></TreeItem>
+        </div>
       </div>
 
-      <div id="menuStructure" v-if="placeData">
-        <h3>Menu Structure</h3>
-        <TreeItem :model="placeData.menuStructure"></TreeItem>
+      <div id="editing" v-if="editMenuStructureBool === true">
+        <div id="placeInfo" v-if="placeData">
+          <!-- <h2>{{ placeData.name }}</h2> -->
+          <h2>{{ placeData.name }}</h2>
+          <p>Phone: {{ placeData.phoneNumber }}</p>
+          <p>Address: {{ placeData.address }}</p>
+          <p>Website: {{ placeData.website }}</p>
+        </div>
+        <div id="menuStructure" v-if="placeData">
+          <h5>To navigate this phone line, use the following menu:</h5>
+          <ion-button @click="toggleEditMenuStructureBool">Toggle Editing</ion-button>
+          <ion-button @click="save" v-if="editMenuStructureBool === true">Save</ion-button>
+          <!-- <ion-button @click="cancel" v-if="editMenuStructureBool === true">Cancel</ion-button> -->
+          <EditTreeItem :model="placeData.menuStructure"></EditTreeItem>
+        </div>
       </div>
     </ion-content>
   </ion-page>
@@ -49,9 +69,17 @@ import { addIcons } from "ionicons";
 
 //tree items from guide
 import TreeItem from "../modules/ExtensionTree/components/TreeItem.vue";
+import EditTreeItem from "../modules/ExtensionTree/components/EditTreeItem.vue";
 
 const route = useRoute();
 const placeData = ref<PlaceData | null>(null);
+const editMenuStructureBool = ref(true);
+console.log(editMenuStructureBool);
+
+function toggleEditMenuStructureBool() {
+  editMenuStructureBool.value = !editMenuStructureBool.value;
+  console.log("edit menu structure bool:" + editMenuStructureBool.value); //does not console log anything
+}
 
 const props = defineProps<{
   id: string;
@@ -65,6 +93,27 @@ interface MenuItem {
   name: string;
   menuNumber?: number;
   children?: MenuItem[];
+}
+
+function save() {
+  if (placeData.value) {
+    const updatedMenuStructure = placeData.value.menuStructure;
+    console.log("Save clicked", updatedMenuStructure);
+
+    // Update the menu structure in the database
+    supabase
+      .from("places")
+      .update({ menu_structure: updatedMenuStructure })
+      .eq("places_id", props.id)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Error updating menu structure:", error);
+        } else {
+          console.log("Menu structure updated successfully:", data);
+          toggleEditMenuStructureBool(); // Exit edit mode
+        }
+      });
+  }
 }
 
 interface PlaceData {
@@ -96,90 +145,23 @@ interface PlaceData {
   menuStructure: MenuItem;
 }
 
-/* onMounted(async () => {
-  try {
-    const { data, error } = await supabase.from("places").select("id, places_id, name, types, phone_number, address, website, latitude, longitude, menu_structure").eq("places_id", props.id).single(); //props.id
-
-    if (error) throw error;
-
-    if (data) {
-      placeData.value = {
-        id: data.id,
-        placesId: data.places_id,
-        name: data.name,
-        types: data.types,
-        phoneNumber: data.phone_number,
-        address: data.address,
-        website: data.website,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        menuStructure: data.menu_structure,
-      };
-
-      treeData.value = data.menu_structure;
-      //console.log(treeData.value);
-    }
-
-    //console.log("Place data:", placeData.value);
-    //console.log("Tree data:", treeData.value);
-  } catch (error) {
-    //console.error("Error fetching data:", error);
-  }
-}); */
-
-//before mounting or on ion view will enter, check if the props.id exists in supabase
-// if it doesn't, call the places api and fill in a row except for the menu_strucutre, leave that null
+function cancel() {
+  // Implement cancel functionality here
+  console.log("Cancel clicked");
+}
 
 async function checkAndFetchPlaceData() {
   try {
     // Check if the place exists in Supabase
     const { data, error } = await supabase.from("places").select("id").eq("places_id", props.id).single();
+    editMenuStructureBool.value = false;
 
     if (error && error.code !== "PGRST116") {
+      editMenuStructureBool.value = false;
       throw error;
     }
 
     if (!data) {
-      // call google places api and get the data
-      // insert everything according to the defintion, put null where data doesn't exist
-      /* create table
-          public.places (
-            id bigint generated always as identity not null,
-            places_id text not null,
-            name text null,
-            display_name text null,
-            types text[] null,
-            national_phone_number text null,
-            international_phone_number text null,
-            formatted_address text null,
-            address_components jsonb null,
-            country text null,
-            state_province text null,
-            city text null,
-            plus_code jsonb null,
-            location jsonb null,
-            rating double precision null,
-            google_maps_uri text null,
-            website_uri text null,
-            regular_opening_hours jsonb null,
-            current_opening_hours jsonb null,
-            business_status text null,
-            user_rating_count integer null,
-            icon_mask_base_uri text null,
-            icon_background_color text null,
-            editorial_summary text null,
-            accessibility_options jsonb null,
-            phone_number text null,
-            address text null,
-            website text null,
-            latitude double precision null,
-            longitude double precision null,
-            menu_structure jsonb null,
-            constraint places_pkey primary key (id),
-            constraint places_places_id_key unique (places_id)
-          ) tablespace pg_default;
-           */
-
       // Call Google Places API
       const placeDetails = await fetchGooglePlaceDetails(props.id);
 

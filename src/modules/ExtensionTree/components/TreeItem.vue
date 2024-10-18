@@ -2,10 +2,7 @@
   <div class="tree-item" :style="{ paddingLeft: `${depth * 16}px` }">
     <ion-item>
       <ion-icon :icon="isOpen ? caretDownOutline : caretForwardOutline" v-if="isFolder" @click="toggle" class="ion-padding-end"></ion-icon>
-      <ion-label @click="toggle">
-        <span v-if="model.menuNumber">{{ model.menuNumber }}. </span>
-        {{ model.name }}
-      </ion-label>
+      <ion-label @click="toggle"> {{ model.name }}: {{ model.menuNumber }} </ion-label>
     </ion-item>
     <ion-list v-show="isOpen" v-if="isFolder">
       <TreeItem v-for="(child, index) in model.children" :key="index" :model="child" :depth="depth + 1" />
